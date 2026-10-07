@@ -27,6 +27,8 @@ forehead headband. It was built for a multi-session meditation study
 | `lib/fif_to_json_sidecar.py` | Converts MNE `.fif` files into a compact JSON sidecar (base64 Float32) that a browser-based signal viewer can read. |
 | `happe-python/` | Python port of **HAPPE** (Harvard Automated Processing Pipeline for EEG, v4.1) on MNE-Python. Every deviation from the MATLAB original is documented. Licensed **GPL-3.0**; see [its README](happe-python/README.md). |
 | `notebooks/` | Batch-processing method notebooks: EEG QC, EEG + HAPPE, EEG feature extraction, fNIRS v2, PPG HRV and PPG respiration. Outputs are cleared. |
+| `notebooks/overall/` | **Study-level export.** `layer3_master_tables_export.ipynb` joins session metadata, protocol phases and signal-QC labels into a master table (one row per session). It also exports per-participant yield and coverage, per-study-day summaries, the analysis roster (sessions eligible for the main analysis), a review-flag list, and a study overview figure. |
+| `notebooks/personalized/` | **Per-participant export** for a personal results dashboard. It has three tiers: (1) the immediate pre/post change for each session; (2) the person's own trend, shown only with ≥5 valid sessions; (3) where the person sits against a population trend, labelled as reference only. It also exports session time series (EEG band power, HR/RMSSD in 30 s windows, PPG-derived respiration, motion-corrected HbO/HbR, relaxation onset, drowsy episodes) and extra dashboard fields (LF/HF by phase, a pooled-phase composite EEG score). The output is JSON/CSV for a front-end. |
 
 ## Design principles
 
@@ -68,6 +70,13 @@ data/analytics/layer2/participant=<id>/study_day=<n>/session_id=<id>/
     fnirs_raw.csv            # fNIRS raw intensity, 2 wavelengths, 100 Hz
     event_labels_block.csv   # phase onsets (EEG-sample latency)
 ```
+
+The overall and personalized notebooks also read tables produced upstream
+(e.g. `data/analytics/layer1/sessions.csv` and
+`data/analytics/metadata_multimodal/session_metadata_survey_features.csv`, a
+per-session table joining survey responses with signal features). Those
+upstream survey steps are not part of this repository. Participant keys are
+shown with a placeholder prefix (`P_A…`).
 
 Set the EEG ADC parameters for your hardware before converting raw counts:
 
