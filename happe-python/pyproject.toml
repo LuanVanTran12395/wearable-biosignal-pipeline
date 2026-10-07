@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "happe"
+version = "4.1.0"
+description = "HAPPE (Harvard Automated Processing Pipeline for EEG) — Python port"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "HAPPE-Python contributors" }]
+dependencies = [
+    "mne>=1.5",
+    "numpy>=1.23",
+    "scipy>=1.10",
+    "scikit-learn>=1.2",
+    "PyWavelets>=1.4",
+    "PyYAML>=6.0",
+    "pandas>=1.5",
+    "matplotlib>=3.6",
+]
+
+[project.optional-dependencies]
+# Optional heavy / not-always-available backends. The pipeline degrades
+# gracefully and records a documented deviation if these are missing.
+icalabel = ["mne-icalabel>=0.4"]
+prep = ["pyprep>=0.4"]
+export = ["eeglabio>=0.0.2"]
+test = ["pytest>=7.0"]
+all = ["mne-icalabel>=0.4", "pyprep>=0.4", "eeglabio>=0.0.2", "pytest>=7.0"]
+
+[project.scripts]
+happe = "happe.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning", "ignore::UserWarning"]

@@ -1,0 +1,28 @@
+# --- Never commit study data or outputs ---
+data/
+data_c/
+*.csv
+*.parquet
+*.edf
+*.fif
+*.bdf
+*.set
+*.fdt
+*.zip
+*.xlsx
+*.xls
+*.docx
+*.pdf
+*.png
+*.html
+# allow package config/test fixtures only if explicitly added with -f
+
+# --- Python / tooling ---
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+*.egg-info/
+.venv/
+.env
+.DS_Store
