@@ -15,7 +15,8 @@ data_c/
 *.pdf
 *.png
 *.html
-# allow package config/test fixtures only if explicitly added with -f
+# README figures are generated from synthetic data (examples/make_figures.py)
+!docs/figures/*.png
 
 # --- Python / tooling ---
 __pycache__/

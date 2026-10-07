@@ -9,6 +9,31 @@ forehead headband. It was built for a multi-session meditation study
 > only. Participant recordings, survey responses, study results and
 > device-vendor material are excluded. Notebook outputs have been cleared.
 
+## At a glance
+
+```mermaid
+flowchart LR
+    A[Raw headband CSV<br/>EEG · PPG · fNIRS] --> B[Signal QC<br/>window metrics,<br/>artifact intervals,<br/>session label]
+    B --> C1[EEG<br/>notch + band-pass<br/>or HAPPE port]
+    B --> C2[PPG<br/>peaks → IBI]
+    B --> C3[fNIRS<br/>OD → TDDR → MBLL]
+    C1 --> D1[Band power, entropy,<br/>relaxation onset,<br/>drowsy episodes]
+    C2 --> D2[HR, RMSSD, LF/HF,<br/>respiration rate]
+    C3 --> D3[ΔHbO / ΔHbR / ΔHbT<br/>phase features]
+    D1 & D2 & D3 --> E[Per-session × phase<br/>feature table]
+    E --> F1[Study-level export<br/>master tables, roster,<br/>mixed models]
+    E --> F2[Personalized export<br/>3-tier report,<br/>session time series]
+```
+
+The figures below are produced by [`examples/make_figures.py`](examples/make_figures.py),
+which runs **synthetic signals** through the real functions in `lib/`. They show
+what each step does. They are not study results.
+
+| | |
+|---|---|
+| ![fNIRS TDDR](docs/figures/fnirs_tddr.png) **fNIRS motion correction.** TDDR repairs baseline shifts and spikes in optical density without needing to know when they happen. | ![PPG HRV](docs/figures/ppg_hrv.png) **PPG → HRV.** Systolic peaks give inter-beat intervals, which are summarised per protocol phase (RMSSD, HR). |
+| ![EEG dynamics](docs/figures/eeg_session_dynamics.png) **EEG within-session dynamics.** Relaxation onset is measured against the person's own resting baseline. A drowsy episode is flagged from the theta/alpha ratio. | ![Personal report](docs/figures/personal_report.png) **Personalized report.** Tier 1 shows this session's pre→post change. Tier 2 shows the participant's own trend, with QC-failed sessions shown but excluded. |
+
 ## What's inside
 
 | Path | What it does |
@@ -49,6 +74,12 @@ forehead headband. It was built for a multi-session meditation study
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 pip install -e happe-python          # optional: the HAPPE port
+```
+
+## Regenerate the figures
+
+```bash
+python examples/make_figures.py      # writes docs/figures/*.png
 ```
 
 ## Tests
