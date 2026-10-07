@@ -5,9 +5,25 @@ Processing and quality-control code for **multimodal wearable recordings**:
 forehead headband. It was built for a multi-session meditation study
 (rest → meditation → rest protocol).
 
-> **No data is included.** This repository contains code and method notebooks
-> only. Participant recordings, survey responses, study results and
-> device-vendor material are excluded. Notebook outputs have been cleared.
+> **No data is included.** This repository contains code, method notebooks,
+> result-export notebooks, and figures generated from synthetic signals.
+> Participant recordings, survey responses, study results and device-vendor
+> material are excluded. Notebook outputs have been cleared.
+
+**Highlights**
+
+- An end-to-end pipeline for three modalities, running from raw CSV through
+  QC, preprocessing and features to study-level and per-participant outputs.
+- A Python port of the HAPPE EEG pipeline (MNE-Python), with 27 unit tests.
+- fNIRS processing with TDDR motion correction and the modified Beer–Lambert
+  law, checked by unit tests on synthetic signals.
+- Repeated-measures statistics (linear mixed models) instead of pooled
+  correlations.
+- A three-tier personalized report that shows an individual trend only when
+  there is enough data to support it.
+
+**Tech stack:** Python · NumPy · SciPy · pandas · MNE-Python · PyWavelets ·
+statsmodels · scikit-learn · matplotlib · Jupyter
 
 ## At a glance
 
@@ -34,6 +50,20 @@ what each step does. They are not study results.
 | ![fNIRS TDDR](docs/figures/fnirs_tddr.png) **fNIRS motion correction.** TDDR repairs baseline shifts and spikes in optical density without needing to know when they happen. | ![PPG HRV](docs/figures/ppg_hrv.png) **PPG → HRV.** Systolic peaks give inter-beat intervals, which are summarised per protocol phase (RMSSD, HR). |
 | ![EEG dynamics](docs/figures/eeg_session_dynamics.png) **EEG within-session dynamics.** Relaxation onset is measured against the person's own resting baseline. A drowsy episode is flagged from the theta/alpha ratio. | ![Personal report](docs/figures/personal_report.png) **Personalized report.** Tier 1 shows this session's pre→post change. Tier 2 shows the participant's own trend, with QC-failed sessions shown but excluded. |
 
+## Repository structure
+
+```
+wearable-biosignal-pipeline/
+├── lib/                     # reusable processing modules (MIT)
+├── happe-python/            # Python port of HAPPE (GPL-3.0)
+├── notebooks/               # batch-processing method notebooks
+│   ├── overall/             # study-level result export
+│   └── personalized/        # per-participant result export
+├── examples/make_figures.py # synthetic-data demo → docs/figures/
+├── docs/figures/            # README figures (synthetic data)
+└── requirements.txt
+```
+
 ## What's inside
 
 | Path | What it does |
@@ -50,10 +80,12 @@ what each step does. They are not study results.
 | `lib/happe_qc.py` | Session-level quality flags derived from HAPPE QC reports. |
 | `lib/mixed_effects.py` | Random-intercept linear mixed models (participant as grouping factor), so that repeated sessions aren't treated as independent observations (pseudo-replication). |
 | `lib/fif_to_json_sidecar.py` | Converts MNE `.fif` files into a compact JSON sidecar (base64 Float32) that a browser-based signal viewer can read. |
+| `lib/test_fnirs_pipeline_v2.py` | Unit tests on synthetic signals. They check that TDDR removes a step shift and that the detrend options behave as documented. |
 | `happe-python/` | Python port of **HAPPE** (Harvard Automated Processing Pipeline for EEG, v4.1) on MNE-Python. Every deviation from the MATLAB original is documented. Licensed **GPL-3.0**; see [its README](happe-python/README.md). |
-| `notebooks/` | Batch-processing method notebooks: EEG QC, EEG + HAPPE, EEG feature extraction, fNIRS v2, PPG HRV and PPG respiration. Outputs are cleared. |
+| `notebooks/` | Batch-processing method notebooks: `eeg_qc`, `eeg_happe_qc`, `eeg_feature_extraction`, `fnirs_hemo_processing_v2`, `ppg_hrv_batch_analysis` and `ppg_resp_batch_analysis`. Outputs are cleared. |
 | `notebooks/overall/` | **Study-level export.** `layer3_master_tables_export.ipynb` joins session metadata, protocol phases and signal-QC labels into a master table (one row per session). It also exports per-participant yield and coverage, per-study-day summaries, the analysis roster (sessions eligible for the main analysis), a review-flag list, and a study overview figure. |
 | `notebooks/personalized/` | **Per-participant export** for a personal results dashboard. It has three tiers: (1) the immediate pre/post change for each session; (2) the person's own trend, shown only with ≥5 valid sessions; (3) where the person sits against a population trend, labelled as reference only. It also exports session time series (EEG band power, HR/RMSSD in 30 s windows, PPG-derived respiration, motion-corrected HbO/HbR, relaxation onset, drowsy episodes) and extra dashboard fields (LF/HF by phase, a pooled-phase composite EEG score). The output is JSON/CSV for a front-end. |
+| `examples/make_figures.py` | Generates the README figures by running synthetic signals through `lib/`. |
 
 ## Design principles
 
@@ -74,6 +106,27 @@ what each step does. They are not study results.
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 pip install -e happe-python          # optional: the HAPPE port
+```
+
+## Quick start
+
+The modules work on plain NumPy arrays, so you can try them without any
+study data:
+
+```python
+import sys; sys.path.insert(0, "lib")
+import numpy as np
+import ppg_hrv
+import fnirs_pipeline_v2 as fp
+
+fs = 100.0
+t = np.arange(0, 120, 1 / fs)
+ppg = np.sin(2 * np.pi * 1.2 * t) ** 21          # ~72 bpm toy pulse wave
+hrv = ppg_hrv.analyze_segment(ppg, fs)            # dict: hr_mean_bpm, rmssd_ms, lf_hf_ratio, ...
+
+od = np.cumsum(np.random.normal(0, 1e-4, 3000))   # toy optical density, 10 Hz
+od[1500:] += 0.03                                 # simulated motion step
+corrected, *_ = fp.tddr(od, sample_rate=10.0)     # TDDR motion correction
 ```
 
 ## Regenerate the figures
